@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="selected">#337755</color>
+    <color name="transparent">#00000000 </color>
+    <color name="background">#ff000000</color>
+    <color name="text">#ffffffff</color>
+    <color name="text_disabled">#ff333333</color>
+    <color name="border">#FF55aaff</color>
+    <color name="normal_button_top">#ff991100</color>
+    <color name="normal_button_bottom">#ff550000</color>
+    <color name="selected_grid">#4488cc</color>
+    <color name="pressed_button_top">#ff238b8b</color>
+    <color name="pressed_button_bottom">#ff0a7b7b</color>
+
+
+    <color name="pressed_button_top1">#ffdd5533</color>
+</resources>

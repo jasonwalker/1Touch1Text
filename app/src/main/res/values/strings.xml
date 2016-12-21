@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">OneTouchText</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+    <string name="noSMSPermission">Cannot send text because I was not granted permission</string>
+    <string name="noContactPermission">Cannot show contacts because I was not granted permission.</string>
+    <string name="noPhoneNumbersRetrieved">No phone numbers retrieved for that contact</string>
+    <string name="workMobile">Work-mobile</string>
+    <string name="mobile">Mobile</string>
+    <string name="home">Home</string>
+    <string name="work">Work</string>
+    <string name="car">Car</string>
+    <string name="main">Main</string>
+    <string name="assistant">Assistant</string>
+    <string name="callback">Callback</string>
+    <string name="other">Other</string>
+    <string name="custom">Custom</string>
+    <string name="sentMessage">Sending\nNumber: %1$s\nMsg: %2$s!</string>
+    <string name="errorSendGeneric">Failed. Generic Failure for:\nNumber: %1$s\nMsg: %2$s</string>
+    <string name="errorSendNoService">Failed. No service for:\nNumber: %1$s\nMsg: %2$s</string>
+    <string name="errorSendNullPDU">Failed. Null PDU for:\nNumber: %1$s\nMsg: %2$s</string>
+    <string name="errorSendRadioOff">Failed. Radio off for:\nNumber: %1$s\nMsg: %2$s</string>
+    <string name="selectPhoneNumber">Select phone number</string>
+    <string name="cancel">Cancel</string>
+    <string name="shortcutIcon">Shortcut Icon</string>
+    <string name="contacts">Contacts</string>
+    <string name="textMessage">Text Message</string>
+    <string name="addShortcutToHome">Add Shortcut to Home</string>
+    <string name="phoneNumber">Phone Number</string>
+    <string name="shortcutName">Shortcut name</string>
+    <string name="noPermissionForPhoneState">Cannot start program because not granted permission to read phone state.</string>
+</resources>

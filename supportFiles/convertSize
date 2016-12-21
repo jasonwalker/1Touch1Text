@@ -1,0 +1,22 @@
+#!/bin/bash
+
+colors=(black blue brown forest green grey navy orange pink purple red white yellow)
+sizes=(48 72 96 144 192)
+outdir=(mdpi hdpi xhdpi xxhdpi xxxhdpi)
+for i in "${outdir[@]}"
+do
+    mkdir mipmap-${i}
+done
+
+for color in "${colors[@]}"
+do
+
+
+
+
+for ((i=0;i<${#sizes[@]};++i)); 
+do
+    convert ${color}Icon.png -resize ${sizes[i]}x${sizes[i]} tmp.png
+    mv tmp.png mipmap-${outdir[i]}/${color}_icon.png
+done
+done
