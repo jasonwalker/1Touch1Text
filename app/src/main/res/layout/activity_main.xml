@@ -92,10 +92,11 @@
         android:background="@drawable/border_line"
         android:layout_below="@+id/messageLabel"
         android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
         android:textColor="@color/text"
         android:textCursorDrawable="@drawable/cursor"
-        android:paddingLeft="3dp"/>
+        android:paddingLeft="3dp"
+        android:layout_marginEnd="5dp"
+        android:layout_toLeftOf="@+id/contactsButton" />
 
     <GridView
         android:id="@+id/iconGrid"
@@ -125,6 +126,17 @@
         android:layout_below="@+id/messageText"
         android:layout_alignParentStart="true"
         android:layout_marginTop="15dp" />
+
+    <onemessage.jmw.com.onemessage.SmallButton
+        android:text="Insert"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text"
+        android:id="@+id/insertTemplateButton"
+        android:layout_alignTop="@+id/messageText"
+        android:layout_alignParentRight="true"
+        android:layout_alignBottom="@+id/messageText"
+        android:layout_toRightOf="@+id/messageText" />
 
 
 </RelativeLayout>

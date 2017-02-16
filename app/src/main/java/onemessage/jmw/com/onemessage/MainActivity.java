@@ -11,7 +11,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Looper;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -45,14 +49,30 @@ public class MainActivity extends Activity implements IDataReceive {
     public static final int REQUEST_SMS = 333;
     public static final int REQUEST_CONTACTS = 334;
     public static final int REQUEST_PHONE_STATE = 335;
+    public static final int REQUEST_GPS = 336;
     public static final int PICK_CONTACT = 99;
     public static final String NUMBER = "number";
     public static final String MESSAGE = "message";
     public static final String ICON = "icon";
+    public static final String GPS_TRIGGER = "%";
+    public static final String LOCATION_MAP = "%location%";
+    public static final String LATITUDE = "%latitude%";
+    public static final String LONGITUDE = "%longitude%";
+    public static final String BEARING = "%bearing%";
+    public static final String CARDINAL = "%cardinal%";
+    public static final String SPEED_MPH = "%speed_mph%";
+    public static final String SPEED_FPS = "%speed_fps%";
+    public static final String SPEED_MPS = "%speed_mps%";
+    public static final String SPEED_KPH = "%speed_kph%";
+    public static final String ALTITUDE_M = "%altitude_m%";
+    public static final String ALTITUDE_F = "%altitude_f%";
+    public static final String GPS_DUMP = "%gps_dump%";
+
     private EditText shortcutText;
     private EditText phoneNumberText;
     private EditText messageText;
     private Button addMessageButton;
+    private Button addInsertButton;
 
     private String numberToSend;
     private String messageToSend;
@@ -195,6 +215,10 @@ public class MainActivity extends Activity implements IDataReceive {
         GridView iconGrid = (GridView) findViewById(R.id.iconGrid);
         addMessageButton.setOnTouchListener(new AddMessageListener());
         contactsButton.setOnTouchListener(new ContactsAskListener());
+
+        addInsertButton = (Button) findViewById(R.id.insertTemplateButton);
+        addInsertButton.setOnTouchListener(new AddInsertListener());
+
         final ImageAdapter imageAdapter = new ImageAdapter();
         DisplayMetrics displaymetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
@@ -259,10 +283,28 @@ public class MainActivity extends Activity implements IDataReceive {
                 String name = shortcutText.getText().toString();
                 String number = phoneNumberText.getText().toString();
                 String message = messageText.getText().toString();
-                addShortcut(name, number, message, selectedIcon);
+                if (message.contains(GPS_TRIGGER) &&
+                        ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_CONTACTS}, REQUEST_GPS);
+                } else {
+                    addShortcut(name, number, message, selectedIcon);
+                }
             }
             finishAffinity();
             setTheme(INVISIBLE_THEME);
+            return false;
+        }
+    }
+
+    private class AddInsertListener implements View.OnTouchListener {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                ChooseInsertDialog dialog = ChooseInsertDialog.newInstance(messageText);
+                FragmentTransaction transaction = MainActivity.this.getFragmentManager().beginTransaction();
+                dialog.show(transaction, "dialog");
+            }
+
             return false;
         }
     }
@@ -383,7 +425,7 @@ public class MainActivity extends Activity implements IDataReceive {
 
     private void send(String number, String message, int iconId) {
         if (ContextCompat.checkSelfPermission(this,  Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, REQUEST_SMS);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS, Manifest.permission.READ_CONTACTS}, REQUEST_SMS);
             this.numberToSend = number;
             this.messageToSend = message;
             this.iconId = iconId;
@@ -435,24 +477,158 @@ public class MainActivity extends Activity implements IDataReceive {
                 if (!permissionGranted(grantResults)) {
                     showToast(getString(R.string.noPermissionForPhoneState), android.R.drawable.stat_notify_error);
                 }
+                break;
+            case REQUEST_GPS:
+                if (permissionGranted(grantResults)) {
+                    String name = shortcutText.getText().toString();
+                    String number = phoneNumberText.getText().toString();
+                    String message = messageText.getText().toString();
+                    addShortcut(name, number, message, selectedIcon);
+                } else {
+                    showToast("Cannot create this shortcut because GPS permission was not granted when text send GPS position", android.R.drawable.stat_notify_error);
+                }
+                break;
         }
     }
+
+    private static String bearingToString(float bearing) {
+        if (bearing < 22.5) {
+            return "north";
+        } else if (bearing < 67.5) {
+            return "north-east";
+        } else if (bearing < 112.5) {
+            return "east";
+        } else if (bearing < 157.5) {
+            return "south-east";
+        } else if (bearing < 202.5) {
+            return "south";
+        } else if (bearing < 247.6) {
+            return "south-west";
+        } else if (bearing < 292.5) {
+            return "west";
+        } else if (bearing < 337.5) {
+            return "north-west";
+        } else {
+            return "north";
+        }
+    }
+
+
+    private class CurrentLocationListener implements LocationListener {
+        private String phoneNo;
+        private String msg;
+        private int id;
+        public CurrentLocationListener(String phoneNo, String msg, int id){
+            this.phoneNo = phoneNo;
+            this.msg = msg;
+            this.id = id;
+        }
+
+        public void onLocationChanged(Location location){
+            String latitude = Double.toString(location.getLatitude());
+            String longitude = Double.toString(location.getLongitude());
+
+            float speed_meterspersecond = location.getSpeed();
+            String speed_mph = Float.toString(speed_meterspersecond * 2.237f);
+            String speed_fps = Float.toString(speed_meterspersecond * 3.28084f);
+            String speed_mps = Float.toString(speed_meterspersecond);
+            String speed_kph = Float.toString(speed_meterspersecond * 3.6f);
+            float bearing = location.getBearing();
+            String bearingString = Float.toString(location.getBearing());
+            String cardinal = bearingToString(bearing);
+            Double altitude = location.getAltitude();
+            String altitude_m = Double.toString(altitude);
+            String altitude_f = Double.toString(altitude * 3.28084);
+            String accuracy_f = Double.toString(location.getAccuracy() * 3.28084);
+            msg = msg.replaceAll(LATITUDE, latitude);
+            msg = msg.replaceAll(LONGITUDE, longitude);
+            msg = msg.replaceAll(LOCATION_MAP, "http://maps.google.com/maps?q=loc:" + latitude + "," + longitude);
+            msg = msg.replaceAll(SPEED_MPH, speed_mph);
+            msg = msg.replaceAll(SPEED_FPS, speed_fps);
+            msg = msg.replaceAll(SPEED_MPS, speed_mps);
+            msg = msg.replaceAll(SPEED_KPH, speed_kph);
+            msg = msg.replaceAll(BEARING, bearingString);
+            msg = msg.replaceAll(CARDINAL, cardinal);
+            msg = msg.replaceAll(ALTITUDE_M, altitude_m);
+            msg = msg.replaceAll(ALTITUDE_F, altitude_f);
+            if (msg.contains(GPS_DUMP)) {
+                StringBuilder sb = new StringBuilder("http://maps.google.com/maps?q=loc:");
+                sb.append(latitude);
+                sb.append(longitude);
+                sb.append("\n");
+                if (location.hasBearing()) {
+                    sb.append("Bearing: ");
+                    sb.append(bearingString);
+                    sb.append("(");
+                    sb.append(cardinal);
+                    sb.append(")\n");
+                }
+                if (location.hasSpeed()) {
+                    sb.append("Speed: ");
+                    sb.append(speed_mph);
+                    sb.append(" mph\n");
+                }
+                if (location.hasAltitude()) {
+                    sb.append("Altitude: ");
+                    sb.append(altitude_f);
+                    sb.append(" ft.\n");
+                }
+                if (location.hasAccuracy()) {
+                    sb.append("Accuracy: ");
+                    sb.append(accuracy_f);
+                    sb.append(" ft.\n");
+                }
+                msg = msg.replaceAll(GPS_DUMP, sb.toString());
+            }
+            actualSend(phoneNo, msg, id);
+
+        }
+
+        public void onStatusChanged(String var1, int var2, Bundle var3){
+
+        }
+
+        public void onProviderEnabled(String var1){
+
+        }
+
+        public void onProviderDisabled(String var1){
+
+        }
+    }
+
     // not registering delivery intent because not all carriers support it
     public void sendSMS(String phoneNo, String msg, int iconId) {
         try {
-            String id = UUID.randomUUID().toString();
-            Intent sendIntent = new Intent(id);
-            sendIntent.putExtra(NUMBER, phoneNo);
-            sendIntent.putExtra(MESSAGE, msg);
-            sendIntent.putExtra(ICON, iconId);
-            PendingIntent sentIntent = PendingIntent.getBroadcast(MainActivity.this, 0, sendIntent, 0);
-            registerSentReceivers(id);
-
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNo, null, msg, sentIntent, null);
+            if (msg.contains(GPS_TRIGGER)) {
+                LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (location == null) {
+                    showError("Could not retrieve location.  Is GPS turned on?");
+                    return;
+                } else {
+                    showToast("Will send text as soon as updated info received from GPS", iconId);
+                    locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new CurrentLocationListener(phoneNo, msg, iconId), Looper.getMainLooper());
+                }
+            } else {
+                actualSend(phoneNo, msg, iconId);
+            }
         } catch (Exception ex) {
             showError(ex.getMessage());
         }
+    }
+
+    private void actualSend(String phoneNo, String msg, int iconId) {
+        String id = UUID.randomUUID().toString();
+        Intent sendIntent = new Intent(id);
+        sendIntent.putExtra(NUMBER, phoneNo);
+        sendIntent.putExtra(MESSAGE, msg);
+        sendIntent.putExtra(ICON, iconId);
+        PendingIntent sentIntent = PendingIntent.getBroadcast(MainActivity.this, 0, sendIntent, 0);
+        registerSentReceivers(id);
+        SmsManager smsManager = SmsManager.getDefault();
+        showToast(String.format(getString(R.string.sentMessage), phoneNo, msg), iconId);
+        smsManager.sendTextMessage(phoneNo, null, msg, sentIntent, null);
     }
 
     private class ErrorAcknowledgeListener implements DialogInterface.OnClickListener {
@@ -478,8 +654,6 @@ public class MainActivity extends Activity implements IDataReceive {
                 unregisterReceiver(this);
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
-                        showToast(String.format(getString(R.string.sentMessage),
-                                number, msg), iconId);
                         finishAffinity();
                         setTheme(INVISIBLE_THEME);
                         break;
